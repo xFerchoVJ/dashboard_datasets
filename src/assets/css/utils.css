@@ -1,0 +1,13 @@
+.start-now{
+  width: 100%;
+}
+
+@media screen and (min-width: 768px){
+  .start-now{
+    width: 30%;
+  }
+}
+
+/* .cfvlby{
+  width: 20% !important;
+} */
