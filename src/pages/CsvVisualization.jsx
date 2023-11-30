@@ -8,11 +8,20 @@ import { useEffect } from "react";
 import RatingsDistribution from "../components/RatingsDistribution";
 import StatsReviews from "../components/StatsReviews";
 import { AlgoritmsTables } from "../components/AlgoritmsTables";
+
 const FormCsv = () => {
+  const EMAIL = "admin@mail.com";
+  const PASSWORD = "123456";
+
   const [csvField, setCsvField] = useState(null);
   const [filter, setFilter] = useState("");
   const [ratings, setRatings] = useState(false);
   const [mostrarAlgoritmos, setMostrarAlgoritmos] = useState(false);
+  const [cluster, setCluster] = useState([]);
+  const [associations, setAssociations] = useState([]);
+  const [isLogged, setIsLogged] = useState(false);
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const {
     dataCsv,
     setDataCsv,
@@ -108,28 +117,97 @@ const FormCsv = () => {
   //     },
   //   },
   // };
+  const clusterAnalysis = async (dataCsv) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/csv/cluster-analysis",
+        { data: dataCsv }
+      );
+      setCluster(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const assosiationAnalysis = async (dataCsv) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/csv/association-analysis",
+        { reviewsData: dataCsv }
+      );
+      setAssociations(response.data.associationData);
+      // setAssociations(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleLogged = (e) => {
+    e.preventDefault();
+    if (email == EMAIL && password == PASSWORD) {
+      setIsLogged(true);
+    } else {
+      setIsLogged(false);
+    }
+  };
+
   return (
     <div className="container mt-3">
       {isLoading ? (
         <Spinner />
       ) : dataCsv.length === 0 ? (
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="formFile" className="form-label">
-              Ingresa tu Dataset
-            </label>
-            <input
-              className="form-control"
-              type="file"
-              onChange={handleChange}
-            />
-          </div>
-          <input
-            type="submit"
-            value="Enviar Archivo CSV"
-            className="btn btn-primary"
-          />
-        </form>
+        <>
+          {isLogged ? (
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label htmlFor="formFile" className="form-label">
+                  Ingresa tu Dataset
+                </label>
+                <input
+                  className="form-control"
+                  type="file"
+                  onChange={handleChange}
+                />
+              </div>
+              <input
+                type="submit"
+                value="Enviar Archivo CSV"
+                className="btn btn-primary"
+              />
+            </form>
+          ) : (
+            <form onSubmit={handleLogged}>
+              <div class="mb-3">
+                <label for="exampleFormControlInput1" class="form-label">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="exampleFormControlInput1"
+                  placeholder="name@example.com"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
+                />
+              </div>
+              <div class="mb-3">
+                <label for="exampleFormControlInput2" class="form-label">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="exampleFormControlInput2"
+                  placeholder="*****************"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                  }}
+                />
+              </div>
+              <input type="submit" className="btn btn-primary" />
+            </form>
+          )}
+        </>
       ) : (
         <>
           <DataTableCsv
@@ -157,6 +235,8 @@ const FormCsv = () => {
                   setMostrarGraficas(false);
                 }
                 setMostrarAlgoritmos(true);
+                clusterAnalysis(dataCsv);
+                assosiationAnalysis(dataCsv);
               }}
             >
               Mostrar Algoritmos
@@ -171,7 +251,9 @@ const FormCsv = () => {
               />
             </>
           )}
-          {mostrarAlgoritmos && <AlgoritmsTables />}
+          {mostrarAlgoritmos && (
+            <AlgoritmsTables clusters={cluster} associations={associations} />
+          )}
         </>
       )}
     </div>
